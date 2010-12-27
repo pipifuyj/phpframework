@@ -1,6 +1,6 @@
 <?php
-//require_once("ModelRecord.php");
-class ModelMongoRecord {
+require_once("ModelRecord.php");
+class ModelMongoRecord extends ModelRecord{
 	public $model=null;
 	public $id=null;
 	public $data=array();
@@ -15,29 +15,32 @@ class ModelMongoRecord {
 	public function __get($name){
 		return $this->get($name);
 	}
-	public function get($key){
+	public function travel($arr=array(),$name='id',&$res=array(),$visit='colvisit',$pre=''){
+		if(is_array($arr)){
+			foreach($arr as $key => $val ) {
+				if ($key!==$name) {
+					$this->travel($val,$name,$res,$visit,$key);
+				}else $this->$visit($pre,$key,$val,$res);
+			}
+		} 
+	}
+	public function colvisit($pre,$key,$val,&$res){
+		$res[$key]=$val;	
+	}
+	public function rowvisit($pre,$key,$val,&$res){
+		$res[$pre]=$val;	
+	}
+	public function getCol($key){
 		$result=array();
-		$this->travel($this->data,$key,$result);
-		//$record=new ModelMongoRecord();
-		//$record->construct($result);
-		if(count($result)==1)return $result[0];
+		$this->travel($this->data,$key,$result,'colvisit');
+		if(count($result)==0)return false;
 		else return $result;
 	}
-	public function travel($arr,$name,&$res,$path=""){
-		if(!is_array($arr)){
-			return false;
-		}
-		foreach($arr as $key => $val ) {
-			if ($key!==$name) {
-				if($path=="")$this->travel($val,$name,$res,ucfirst($key));
-				else $this->travel($val,$name,$res,ucfirst($path).ucfirst($key));
-			}else {
-				if($path=="")$path=ucfirst($key);
-				else $path=ucfirst($path).ucfirst($key);
-				//$res[$path]=$val;
-				$res[]=$val;
-			}
-		}
+	public function getRowById($id){
+		$result=array('id'=>$id);
+		$this->travel($this->data,$id,$result,'rowvisit');
+		if(count($result)==0)return false;
+		else return $result;
 	}
 }
 ?>
